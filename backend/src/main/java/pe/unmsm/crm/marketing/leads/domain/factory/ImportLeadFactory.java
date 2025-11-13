@@ -16,38 +16,32 @@ import pe.unmsm.crm.marketing.leads.domain.vo.TrackingUTM;
 @Component
 public class ImportLeadFactory implements LeadFactory {
 
-    // Herramienta para convertir el String JSON de la DB a un Mapa usable
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public Lead convertirALead(Object origenStaging) {
-        // 1. Validación de tipo
         if (!(origenStaging instanceof RegistroImportado)) {
             throw new IllegalArgumentException("El objeto origen no es un RegistroImportado");
         }
         RegistroImportado registro = (RegistroImportado) origenStaging;
 
         try {
-            // 2. Parsear el JSON crudo que vino del Excel
-            // Ejemplo JSON: {"nombre": "Juan", "email": "juan@test.com", "edad": "30"}
+
             @SuppressWarnings("unchecked")
             Map<String, Object> datos = objectMapper.readValue(registro.getDatosJson(), Map.class);
 
-            // 3. Crear la instancia concreta
             LeadImportado lead = new LeadImportado();
             lead.setNombre(String.valueOf(datos.getOrDefault("nombre", "Sin Nombre")));
             lead.setIdReferenciaOrigen(registro.getId());
-            lead.setEstado(EstadoLead.NUEVO); // Siempre nacen nuevos
+            lead.setEstado(EstadoLead.NUEVO);
 
-            // 4. Construir VO: Datos de Contacto (Obligatorio)
             DatosContacto contacto = new DatosContacto(
                 String.valueOf(datos.get("email")),
                 String.valueOf(datos.getOrDefault("telefono", "")),
-                null // El Excel raramente trae ID de distrito validado
+                null
             );
             lead.setContacto(contacto);
 
-            // 5. Construir VO: Datos Demográficos (Opcional)
             if (datos.containsKey("edad") || datos.containsKey("genero")) {
                 Integer edad = parseIntSafe(datos.get("edad"));
                 String genero = (String) datos.get("genero");
