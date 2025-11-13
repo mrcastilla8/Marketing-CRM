@@ -13,22 +13,18 @@ import pe.unmsm.crm.marketing.leads.domain.repository.LeadRepository;
 @RequiredArgsConstructor
 public class LeadProcessingService {
 
-    // Spring inyecta TODAS las fábricas en esta lista
     private final List<LeadFactory> factories;
     private final LeadRepository leadRepository;
 
     public void procesarDesdeStaging(TipoFuente tipo, Object datoStaging) {
         
-        // 1. Seleccionar Estrategia (Factory) dinámicamente
         LeadFactory factory = factories.stream()
                 .filter(f -> f.soporta(tipo))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("No existe fábrica para: " + tipo));
 
-        // 2. Convertir Staging -> Lead (El Lead nace NUEVO)
         Lead nuevoLead = factory.convertirALead(datoStaging);
 
-        // 3. Guardar
         leadRepository.save(nuevoLead);
     }
 }
